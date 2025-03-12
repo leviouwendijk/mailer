@@ -552,7 +552,7 @@ struct Onboarding: ParsableCommand {
 struct Example: ParsableCommand {
     func run() throws {
         print()
-        print("mailer".ansi(.green) + " invoice".ansi(.underline) + "--id 388".ansi(.italic))
+        print("mailer".ansi(.green) + " " + "invoice".ansi(.underline) + "--id 388".ansi(.italic))
         print()
     }
 }
