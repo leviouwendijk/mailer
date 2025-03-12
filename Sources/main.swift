@@ -443,6 +443,12 @@ struct Invoice: ParsableCommand {
         let attachmentPath = environment(Environment.invoicePDF.rawValue)
         let attachmentURL = URL(fileURLWithPath: attachmentPath)
         let attachmentBase64 = attachmentURL.base64()
+        
+        let sendEmail = environment(Environment.testEmail.rawValue)
+
+        print()
+        print("Sending to: \(sendEmail)".ansi(.bold))
+        print()
 
         return [
             "from": [
@@ -451,7 +457,7 @@ struct Invoice: ParsableCommand {
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
-            "to": [environment(Environment.testEmail.rawValue)],
+            "to": [sendEmail],
             "bcc": environment(Environment.automationsEmail.rawValue),
             // "subject": "Betalingsherinnering",
             "template": [
@@ -459,7 +465,7 @@ struct Invoice: ParsableCommand {
                 "file": "issue",
                 "variables": [
                     "name": name,
-                    "email": environment(Environment.testEmail.rawValue),
+                    "email": sendEmail,
                     "invoice_number": invoiceNumber,
                     "due_date": dueDate,
                     "amount": amount,
