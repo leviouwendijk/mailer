@@ -357,7 +357,7 @@ struct Invoice: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
     var close: Bool = false
 
-    @Option(name: [.short, .long, .customLong("id")], parsing: .unconditional, help: "Comma-separated file paths for attachments")
+    @Argument(help: "Comma-separated file paths for attachments")
     var invoiceId: String
 
     func run() throws {
@@ -552,7 +552,7 @@ struct Onboarding: ParsableCommand {
 struct Example: ParsableCommand {
     func run() throws {
         print()
-        print("mailer".ansi(.green) + " " + "invoice".ansi(.underline) + "--id 388".ansi(.italic))
+        print("mailer".ansi(.green) + " " + "invoice".ansi(.underline) + " " + "388".ansi(.italic))
         print()
     }
 }

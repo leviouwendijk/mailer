@@ -24,5 +24,5 @@ enum Environment: String {
 Example call:
 
 ```bash
-mailer invoice --id 388
+mailer invoice 388
 ```
