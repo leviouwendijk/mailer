@@ -155,7 +155,7 @@ struct Mailer: ParsableCommand {
         commandName: "mailer",
         abstract: "Mailer api interface",
         version: "1.0.0",
-        subcommands: [Mail.self, Invoice.self, Confirmation.self, Follow.self, Onboarding.self],  
+        subcommands: [Mail.self, Invoice.self, Confirmation.self, Follow.self, Onboarding.self, Example.self],  
         defaultSubcommand: Mail.self
     )
 }
@@ -546,6 +546,14 @@ struct Onboarding: ParsableCommand {
 
     func run() throws {
 
+    }
+}
+
+struct Example: ParsableCommand {
+    func run() throws {
+        print()
+        print("mailer".ansi(.green) + " invoice".ansi(.underline) + "--id 388".ansi(.italic))
+        print()
     }
 }
 
