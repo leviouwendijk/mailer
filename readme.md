@@ -18,3 +18,11 @@ enum Environment: String {
     case automationsEmail = "MAILER_AUTOMATIONS_EMAIL"
 }
 ```
+
+# Use
+
+Example call:
+
+```bash
+mailer invoice --id 388
+```
