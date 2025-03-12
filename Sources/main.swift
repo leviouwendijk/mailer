@@ -2,6 +2,8 @@ import Foundation
 import ArgumentParser
 import plate
 
+let production = true
+
 enum Environment: String {
     case apikey = "MAILER_API_KEY" 
     case apiURL = "MAILER_API_BASE_URL"
@@ -425,7 +427,7 @@ struct Invoice: ParsableCommand {
 
     func constructMailPayload(from invoiceData: [String: Any]) -> [String: Any] {
         let name = invoiceData["client_name"] as? String ?? "Unknown"
-        let email = invoiceData["client_email"] as? String ?? "Unknown"
+        let email = invoiceData["email"] as? String ?? "ERROR EXTRACTING EMAIL FROM numbers-parser/client_db_reparse.json"
         let invoiceNumber = invoiceData["invoice_id"] as? String ?? "000000"
         let dueDate = invoiceData["due_date"] as? String ?? "N/A"
         let productLine = invoiceData["product_line"] as? String ?? "N/A"
@@ -444,7 +446,7 @@ struct Invoice: ParsableCommand {
         let attachmentURL = URL(fileURLWithPath: attachmentPath)
         let attachmentBase64 = attachmentURL.base64()
         
-        let sendEmail = environment(Environment.testEmail.rawValue)
+        let sendEmail = production ? email : environment(Environment.testEmail.rawValue)
 
         print()
         print("Sending to: \(sendEmail)".ansi(.bold))
