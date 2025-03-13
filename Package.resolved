@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/leviouwendijk/plate.git",
       "state" : {
-        "revision" : "c998b31045346d8185cca6b51df10e895ab0956d",
-        "version" : "1.2.5"
+        "revision" : "43ece5d39762b26dcddb11f081d100c713d75e51",
+        "version" : "1.2.8"
       }
     },
     {

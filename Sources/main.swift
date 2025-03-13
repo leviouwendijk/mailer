@@ -11,6 +11,7 @@ enum Environment: String {
     case from = "MAILER_FROM"
     case alias = "MAILER_ALIAS"
     case aliasInvoice = "MAILER_ALIAS_INVOICE"
+    case aliasAppointment = "MAILER_ALIAS_APPOINTMENT"
     case domain = "MAILER_DOMAIN"
     case replyTo = "MAILER_REPLY_TO"
     case invoiceJSON = "MAILER_INVOICE_JSON"
@@ -157,7 +158,7 @@ struct Mailer: ParsableCommand {
         commandName: "mailer",
         abstract: "Mailer api interface",
         version: "1.0.0",
-        subcommands: [Mail.self, Invoice.self, Confirmation.self, Follow.self, Onboarding.self, Example.self],  
+        subcommands: [Mail.self, Invoice.self, Appointment.self, Follow.self, Onboarding.self, Example.self],  
         defaultSubcommand: Mail.self
     )
 }
@@ -524,12 +525,176 @@ struct Invoice: ParsableCommand {
     }
 }
 
-struct Confirmation: ParsableCommand {
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
-    var invoiceId: String
+struct Appointment: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "appointment",
+        abstract: "Send an appointment confirmation email"
+    )
+
+    @Option(name: .shortAndLong, help: "Client name")
+    var client: String
+
+    @Option(name: .shortAndLong, help: "Dog's name")
+    var dog: String
+
+    @Option(name: .shortAndLong, help: "Date of appointment (DD/MM/YYYY)")
+    var date: String
+
+    @Option(name: .shortAndLong, help: "Time of appointment (HH:MM)")
+    var time: String
+
+    @Option(name: .shortAndLong, help: "Street name")
+    var street: String = ""
+
+    @Option(name: .shortAndLong, help: "House number")
+    var number: String = ""
+
+    @Option(name: .shortAndLong, help: "Area code")
+    var areaCode: String = ""
+
+    @Option(name: .shortAndLong, help: "City or town")
+    var location: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "Client email address")
+    var email: String
 
     func run() throws {
+        let icsContent = generateICS(client: client, dog: dog, date: date, time: time, street: street, number: number, areaCode: areaCode, location: location)
+        let icsBase64 = Data(icsContent.utf8).base64EncodedString()
 
+        var variables: [String: Any?] = [
+            "name": client,
+            "dog": dog,
+            "date": date,
+            "time": time,
+            "area": areaCode,
+            "number": number,
+            "street": street,
+            "location": location
+        ]
+
+
+        print("vars: ", variables)
+        // Remove nil values
+        let filteredVariables = variables.compactMapValues { $0 }
+        print("filt. vars: ", variables)
+
+        let mailPayload: [String: Any] = [
+            "from": [
+                "name": environment(Environment.from.rawValue),
+                "alias": environment(Environment.aliasAppointment.rawValue),
+                "domain": environment(Environment.domain.rawValue)
+            ],
+            "to": [email],
+            "bcc": environment(Environment.automationsEmail.rawValue),
+            "template": [
+                "category": "appointment",
+                "file": "confirmation",
+                "variables": filteredVariables
+            ],
+            "replyTo": [environment(Environment.replyTo.rawValue)],
+            "attachments": [
+                [
+                    "name": "appointment.ics",
+                    "value": icsBase64,
+                    "type": "text/calendar"
+                ]
+            ]
+        ]
+
+        try sendAppointmentEmail(payload: mailPayload)
+    }
+
+    /// Function to generate ICS file content
+    func generateICS(client: String, dog: String, date: String, time: String, street: String, number: String, areaCode: String, location: String) -> String {
+        let startTime = convertToICSFormat(date: date, time: time, timeType: "start")
+        let endTime = convertToICSFormat(date: date, time: time, timeType: "end")
+
+        return """
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//Hondenmeesters//Event Confirmation//EN
+        BEGIN:VEVENT
+        UID:\(UUID().uuidString)@hondenmeesters.nl
+        DTSTAMP:\(isoTimestamp())
+        DTSTART:\(startTime)
+        DTEND:\(endTime)
+        SUMMARY:Hondenmeesters, afspraak voor \(dog)
+        DESCRIPTION:Beste \(client),\\n\\nUw afspraak voor \(dog) is bevestigd.\\n\\nHoud alsjeblief rekening met mogelijke uitloop.\\n\\nHartelijke groet,\\nHet Hondenmeesters Team
+        LOCATION:\(street) \(number)\\n\(areaCode)\\n\(location)
+        END:VEVENT
+        END:VCALENDAR
+        """
+    }
+    
+    func convertToICSFormat(date: String, time: String, timeType: String, duration: Double = 2.0.hoursToSeconds()) -> String {
+        guard let dateTime = parseDateTime(date: date, time: time) else {
+            return "ERROR_DATE_FORMAT"
+        }
+
+        let finalTime = (timeType == "end") ? dateTime.addingTimeInterval(duration) : dateTime
+
+        return formatDateToICS(finalTime)
+    }
+
+    /// Parses date and time strings into a `Date` object
+    func parseDateTime(date: String, time: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy HH:mm"
+        formatter.timeZone = TimeZone(identifier: "Europe/Amsterdam")
+        return formatter.date(from: "\(date) \(time)")
+    }
+
+    /// Converts a `Date` object to ICS-compliant UTC format
+    func formatDateToICS(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter.string(from: date)
+    }
+
+    /// Function to get the current timestamp in ICS format
+    func isoTimestamp() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.string(from: Date())
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: ".", with: "")
+    }
+
+    /// Function to send the appointment email
+    func sendAppointmentEmail(payload: [String: Any]) throws {
+        let apiKey = environment(Environment.apikey.rawValue)
+        let reqURL = try reqURL()
+        print("Hitting API endpoint with URL: ", reqURL)
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        
+        let request = NetworkRequest(
+            url: reqURL,
+            method: .post,
+            auth: .apikey(value: apiKey),
+            headers: ["Content-Type": "application/json"],
+            body: jsonData,
+            log: true
+        )
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+
+        request.execute { success, data, error in
+            defer { dispatchGroup.leave() }
+
+            if let error = error {
+                print("Error sending email:\n\(error)".ansi(.red))
+            } else if let data = data, success {
+                let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+                print("Email sent successfully:\n\(responseString)".ansi(.green))
+            }
+        }
+
+        dispatchGroup.wait()
     }
 }
 
