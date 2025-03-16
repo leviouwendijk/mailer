@@ -33,6 +33,7 @@ enum Endpoint: String, RawRepresentable {
     case new = "new"
     case issue = "issue"
     case issueSimple = "issue/simple"
+    case expired = "expired"
     case confirmation = "confirmation"
     case reminder = "reminder"
 }
@@ -417,12 +418,15 @@ struct Invoice: ParsableCommand {
     @Argument(help: "Comma-separated file paths for attachments")
     var invoiceId: String
 
+    @Flag(name: .shortAndLong, help: "Comma-separated file paths for attachments")
+    var expired: Bool = false
+
     func run() throws {
         do {
             try executeNumbersParser(invoiceId: invoiceId, close: close)
             let invoiceData = try readParsedInvoiceData(invoiceId: invoiceId)
             let mailPayload = constructMailPayload(from: invoiceData)
-            try sendInvoiceEmail(payload: mailPayload)
+            try sendInvoiceEmail(payload: mailPayload, expired: expired)
         } catch {
             print("Error running commands: \(error)")
         }
@@ -518,8 +522,8 @@ struct Invoice: ParsableCommand {
             "bcc": environment(Environment.automationsEmail.rawValue),
             // "subject": "Betalingsherinnering",
             "template": [
-                "category": "invoice",
-                "file": "issue",
+                // "category": "invoice",
+                // "file": "issue",
                 "variables": [
                     "name": name,
                     "email": sendEmail,
@@ -545,12 +549,22 @@ struct Invoice: ParsableCommand {
         ]
     }
 
-    func sendInvoiceEmail(payload: [String: Any]) throws {
+    func sendInvoiceEmail(payload: [String: Any], expired: Bool = false) throws {
         let apiKey = environment(Environment.apikey.rawValue)
-        let endpoint = RequestURL(
-            route: .invoice,
-            endpoint: .issue
-        ).url()
+
+        var endpoint: URL
+
+        if expired {
+            endpoint = RequestURL(
+                route: .invoice,
+                endpoint: .expired
+            ).url()
+        } else {
+            endpoint = RequestURL(
+                route: .invoice,
+                endpoint: .issue
+            ).url()
+        }
 
         print("Hitting API endpoint with URL: ", endpoint)
 
@@ -713,8 +727,8 @@ struct Appointment: ParsableCommand {
             "to": [email],
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
-                "category": "appointment",
-                "file": "confirmation",
+                // "category": "appointment",
+                // "file": "confirmation",
                 "variables": [
                     "name": client,
                     "dog": dog,
