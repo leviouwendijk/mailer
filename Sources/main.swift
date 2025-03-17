@@ -811,6 +811,7 @@ struct Quote: ParsableCommand {
         let attachmentURL = URL(fileURLWithPath: attachmentPath)
         let attachmentBase64 = attachmentURL.base64()
 
+        if !follow {
         // for quote in quotes {
             attachments.append([
                 "type": "pdf",
@@ -818,6 +819,7 @@ struct Quote: ParsableCommand {
                 "name": "offerte.pdf"
             ])
         // }
+        }
 
         let mailPayload: [String: Any] = [
             "from": [
