@@ -27,6 +27,7 @@ enum Route: String, RawRepresentable {
     case appointment
     case quote
     case lead
+    case service
     case review
 
     func alias() -> String {
@@ -40,6 +41,8 @@ enum Route: String, RawRepresentable {
             case .quote:
                 return "offertes"
             case .lead:
+                return "relaties"
+            case .service:
                 return "relaties"
             case .review:
                 return "relaties"
@@ -55,6 +58,7 @@ enum Endpoint: String, RawRepresentable {
     case confirmation = "confirmation"
     case reminder = "reminder"
     case follow = "follow"
+    case onboarding = "onboarding"
 }
 
 struct RequestURL {
@@ -116,9 +120,9 @@ struct To {
 struct Template {
     let category: String
     let file: String
-    let variables: [String: String]
+    let variables: [String: Any]
 
-    init(category: String, file: String, variables: [String: String]) {
+    init(category: String, file: String, variables: [String: Any]) {
         self.category = category
         self.file = file
         self.variables = variables
@@ -222,12 +226,17 @@ struct AppointmentDetails: Codable {
     let location: String
 }
 
+struct AvailabilityEntry: Codable {
+  let start: String
+  let end:   String
+}
+
 struct Mailer: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "mailer",
         abstract: "Mailer api interface",
         version: "1.0.0",
-        subcommands: [Invoice.self, Appointment.self, Quote.self, Follow.self, Onboarding.self, Example.self]  
+        subcommands: [Invoice.self, Appointment.self, Quote.self, Service.self, Lead.self, Example.self]  
         // defaultSubcommand: Mail.self
     )
 }
@@ -791,6 +800,129 @@ struct Appointment: ParsableCommand {
     }
 }
 
+struct Lead: ParsableCommand {
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
+    var client: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
+    var dog: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
+    var email: String
+
+    // defaults to "onboarding"
+    @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than issue endpoint.")
+    var follow: Bool = false
+
+    @Option(
+      name: .long,
+      parsing: .unconditional,
+      help: "JSON object of availability, e.g. '{\"mon\":{\"start\":\"18:00\",\"end\":\"21:00\"},…}'"
+    )
+    var availabilityJSON: String
+
+    func run() throws {
+        // decode your JSON into a [String:TimeEntry]
+        guard let data = availabilityJSON.data(using: .utf8),
+              let avail = try? JSONDecoder().decode(
+                 [String: AvailabilityEntry].self,
+                 from: data
+              )
+        else {
+          throw ValidationError("Invalid JSON for --availabilityJSON")
+        }
+
+        let timeRangeDict = avail.reduce(into: [String:[String:String]]()) { out, pair in
+            let (day, entry) = pair
+                out[day] = ["start": entry.start, "end": entry.end]
+        }
+
+        var attachments: [[String: String]] = []
+
+        // let attachmentPath = environment(Environment.quotePath.rawValue)
+        // let attachmentURL = URL(fileURLWithPath: attachmentPath)
+        // let attachmentBase64 = attachmentURL.base64()
+
+        // if !follow {
+        // // for quote in quotes {
+        //     attachments.append([
+        //         "type": "pdf",
+        //         "value": attachmentBase64 ?? "",
+        //         "name": "offerte.pdf"
+        //     ])
+        // // }
+        // }
+
+        let mailPayload: [String: Any] = [
+            "from": [
+                "name": environment(Environment.from.rawValue),
+                "alias": Route.quote.alias(),
+                "domain": environment(Environment.domain.rawValue)
+            ],
+            "to": [email],
+            "bcc": environment(Environment.automationsEmail.rawValue),
+            "template": [
+                "variables": [
+                    "name": client,
+                    "dog": dog,
+                    "time_range": timeRangeDict
+                ]
+            ],
+            "replyTo": [environment(Environment.replyTo.rawValue)],
+            "attachments": attachments
+        ]
+
+        try sendLeadEmail(payload: mailPayload, follow: follow)
+    }
+
+    func sendLeadEmail(payload: [String: Any], follow: Bool = false) throws {
+        let apiKey = environment(Environment.apikey.rawValue)
+        
+        var endpoint: URL
+
+        if follow {
+            endpoint = RequestURL(
+                route: .lead,
+                endpoint: .follow
+            ).url()
+        } else {
+            endpoint = RequestURL(
+                route: .lead,
+                endpoint: .confirmation
+            ).url()
+        }
+
+        print("Hitting API endpoint with URL: ", endpoint)
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        
+        let request = NetworkRequest(
+            url: endpoint,
+            method: .post,
+            auth: .apikey(value: apiKey),
+            headers: ["Content-Type": "application/json"],
+            body: jsonData,
+            log: true
+        )
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+
+        request.execute { success, data, error in
+            defer { dispatchGroup.leave() }
+
+            if let error = error {
+                print("Error sending email:\n\(error)".ansi(.red))
+            } else if let data = data, success {
+                let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+                print("Email sent successfully:\n\(responseString)".ansi(.green))
+            }
+        }
+
+        dispatchGroup.wait()
+    }
+}
+
 struct Quote: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
     var client: String
@@ -890,23 +1022,146 @@ struct Quote: ParsableCommand {
     }
 }
 
-struct Follow: ParsableCommand {
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
-    var invoiceId: String
+struct Service: ParsableCommand {
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
+    var client: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
+    var dog: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
+    var email: String
+
+    // defaults to "onboarding"
+    @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
+    var follow: Bool = false
+
+    @Option(
+      name: .long,
+      parsing: .unconditional,
+      help: "JSON object of availability, e.g. '{\"mon\":{\"start\":\"18:00\",\"end\":\"21:00\"},…}'"
+    )
+    var availabilityJSON: String
 
     func run() throws {
+        // decode your JSON into a [String:TimeEntry]
+        guard let data = availabilityJSON.data(using: .utf8),
+              let avail = try? JSONDecoder().decode(
+                 [String: AvailabilityEntry].self,
+                 from: data
+              )
+        else {
+          throw ValidationError("Invalid JSON for --availabilityJSON")
+        }
 
+        let timeRangeDict = avail.reduce(into: [String:[String:String]]()) { out, pair in
+            let (day, entry) = pair
+                out[day] = ["start": entry.start, "end": entry.end]
+        }
+
+        var attachments: [[String: String]] = []
+
+        // let attachmentPath = environment(Environment.quotePath.rawValue)
+        // let attachmentURL = URL(fileURLWithPath: attachmentPath)
+        // let attachmentBase64 = attachmentURL.base64()
+
+        // if !follow {
+        // // for quote in quotes {
+        //     attachments.append([
+        //         "type": "pdf",
+        //         "value": attachmentBase64 ?? "",
+        //         "name": "offerte.pdf"
+        //     ])
+        // // }
+        // }
+
+        let mailPayload: [String: Any] = [
+            "from": [
+                "name": environment(Environment.from.rawValue),
+                "alias": Route.quote.alias(),
+                "domain": environment(Environment.domain.rawValue)
+            ],
+            "to": [email],
+            "bcc": environment(Environment.automationsEmail.rawValue),
+            "template": [
+                "variables": [
+                    "name": client,
+                    "dog": dog,
+                    "time_range": timeRangeDict
+                ]
+            ],
+            "replyTo": [environment(Environment.replyTo.rawValue)],
+            "attachments": attachments
+        ]
+
+        try sendServiceEmail(payload: mailPayload, follow: follow)
+    }
+
+    func sendServiceEmail(payload: [String: Any], follow: Bool = false) throws {
+        let apiKey = environment(Environment.apikey.rawValue)
+        
+        var endpoint: URL
+
+        if follow {
+            endpoint = RequestURL(
+                route: .service,
+                endpoint: .follow
+            ).url()
+        } else {
+            endpoint = RequestURL(
+                route: .service,
+                endpoint: .onboarding
+            ).url()
+        }
+
+        print("Hitting API endpoint with URL: ", endpoint)
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        
+        let request = NetworkRequest(
+            url: endpoint,
+            method: .post,
+            auth: .apikey(value: apiKey),
+            headers: ["Content-Type": "application/json"],
+            body: jsonData,
+            log: true
+        )
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+
+        request.execute { success, data, error in
+            defer { dispatchGroup.leave() }
+
+            if let error = error {
+                print("Error sending email:\n\(error)".ansi(.red))
+            } else if let data = data, success {
+                let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+                print("Email sent successfully:\n\(responseString)".ansi(.green))
+            }
+        }
+
+        dispatchGroup.wait()
     }
 }
 
-struct Onboarding: ParsableCommand {
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
-    var invoiceId: String
+// struct Follow: ParsableCommand {
+//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
+//     var invoiceId: String
 
-    func run() throws {
+//     func run() throws {
 
-    }
-}
+//     }
+// }
+
+// struct Onboarding: ParsableCommand {
+//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
+//     var invoiceId: String
+
+//     func run() throws {
+
+//     }
+// }
 
 struct Example: ParsableCommand {
     func run() throws {
