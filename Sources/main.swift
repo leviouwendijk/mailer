@@ -60,6 +60,7 @@ enum Endpoint: String, RawRepresentable {
     case follow = "follow"
     case onboarding = "onboarding"
     case review = "review"
+    case check = "check"
 }
 
 struct RequestURL {
@@ -815,6 +816,9 @@ struct Lead: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than issue endpoint.")
     var follow: Bool = false
 
+    @Flag(name: .shortAndLong, help: "Check-in email after contact but no next steps taken")
+    var check: Bool = false
+
     @Option(
       name: .long,
       parsing: .unconditional,
@@ -884,7 +888,7 @@ struct Lead: ParsableCommand {
         if follow {
             endpoint = RequestURL(
                 route: .lead,
-                endpoint: .follow
+                endpoint: check ? .check : .follow
             ).url()
         } else {
             endpoint = RequestURL(
