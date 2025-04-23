@@ -877,18 +877,23 @@ struct Lead: ParsableCommand {
             "attachments": attachments
         ]
 
-        try sendLeadEmail(payload: mailPayload, follow: follow)
+        try sendLeadEmail(payload: mailPayload, follow: follow, check: check)
     }
 
-    func sendLeadEmail(payload: [String: Any], follow: Bool = false) throws {
+    func sendLeadEmail(payload: [String: Any], follow: Bool = false, check: Bool = false) throws {
         let apiKey = environment(Environment.apikey.rawValue)
         
         var endpoint: URL
 
-        if follow {
+        if check {
             endpoint = RequestURL(
                 route: .lead,
-                endpoint: check ? .check : .follow
+                endpoint: .check
+            ).url()
+        } else if follow {
+            endpoint = RequestURL(
+                route: .lead,
+                endpoint: .follow
             ).url()
         } else {
             endpoint = RequestURL(
