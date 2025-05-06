@@ -29,6 +29,7 @@ enum Route: String, RawRepresentable {
     case lead
     case service
     case resolution
+    case affiliate
 
     func alias() -> String {
         switch self {
@@ -46,6 +47,8 @@ enum Route: String, RawRepresentable {
                 return "relaties"
             case .resolution:
                 return "relaties"
+            case .affiliate:
+                return "relaties"
         }
     }
 }
@@ -61,6 +64,7 @@ enum Endpoint: String, RawRepresentable {
     case onboarding = "onboarding"
     case review = "review"
     case check = "check"
+    case food = "food"
 }
 
 struct RequestURL {
@@ -238,7 +242,7 @@ struct Mailer: ParsableCommand {
         commandName: "mailer",
         abstract: "Mailer api interface",
         version: "1.0.0",
-        subcommands: [Invoice.self, Appointment.self, Quote.self, Service.self, Resolution.self, Lead.self, Example.self]  
+        subcommands: [Invoice.self, Appointment.self, Quote.self, Service.self, Resolution.self, Lead.self, Affiliate.self, Example.self]  
         // defaultSubcommand: Mail.self
     )
 }
@@ -1222,6 +1226,111 @@ struct Resolution: ParsableCommand {
                 route: .resolution,
                 endpoint: .review
             ).url()
+        }
+
+        print("Hitting API endpoint with URL: ", endpoint)
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        
+        let request = NetworkRequest(
+            url: endpoint,
+            method: .post,
+            auth: .apikey(value: apiKey),
+            headers: ["Content-Type": "application/json"],
+            body: jsonData,
+            log: true
+        )
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+
+        request.execute { success, data, error in
+            defer { dispatchGroup.leave() }
+
+            if let error = error {
+                print("Error sending email:\n\(error)".ansi(.red))
+            } else if let data = data, success {
+                let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+                print("Email sent successfully:\n\(responseString)".ansi(.green))
+            }
+        }
+
+        dispatchGroup.wait()
+    }
+}
+
+struct Affiliate: ParsableCommand {
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
+    var client: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
+    var dog: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
+    var email: String
+
+    // defaults to "onboarding"
+    // @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
+    // var follow: Bool = false
+
+    @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
+    var food: Bool = false
+
+    func run() throws {
+        var attachments: [[String: String]] = []
+
+        // let attachmentPath = environment(Environment.quotePath.rawValue)
+        // let attachmentURL = URL(fileURLWithPath: attachmentPath)
+        // let attachmentBase64 = attachmentURL.base64()
+
+        // if !follow {
+        // // for quote in quotes {
+        //     attachments.append([
+        //         "type": "pdf",
+        //         "value": attachmentBase64 ?? "",
+        //         "name": "offerte.pdf"
+        //     ])
+        // // }
+        // }
+
+        let mailPayload: [String: Any] = [
+            "from": [
+                "name": environment(Environment.from.rawValue),
+                "alias": Route.quote.alias(),
+                "domain": environment(Environment.domain.rawValue)
+            ],
+            "to": [email],
+            "bcc": environment(Environment.automationsEmail.rawValue),
+            "template": [
+                "variables": [
+                    "name": client,
+                    "dog": dog
+                ]
+            ],
+            "replyTo": [environment(Environment.replyTo.rawValue)],
+            "attachments": attachments
+        ]
+
+        try sendAffiliateEmail(payload: mailPayload, food: food)
+    }
+
+    func sendAffiliateEmail(payload: [String: Any], food: Bool = false) throws {
+        let apiKey = environment(Environment.apikey.rawValue)
+        
+        var endpoint: URL
+
+        if food {
+            endpoint = RequestURL(
+                route: .affiliate,
+                endpoint: .food
+            ).url()
+        } else {
+            print("Endpoint not configured or specified")
+            return
+            // endpoint = RequestURL(
+            //     route: .affiliate,
+            //     endpoint: .review
+            // ).url()
         }
 
         print("Hitting API endpoint with URL: ", endpoint)
