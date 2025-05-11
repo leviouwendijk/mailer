@@ -616,15 +616,34 @@ struct Invoice: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
@@ -791,15 +810,34 @@ struct Appointment: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
@@ -922,15 +960,34 @@ struct Lead: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
@@ -1021,15 +1078,34 @@ struct Quote: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
@@ -1144,15 +1220,34 @@ struct Service: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
@@ -1244,15 +1339,34 @@ struct Resolution: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
@@ -1349,15 +1463,34 @@ struct Affiliate: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        request.execute { success, data, error in
-            defer { dispatchGroup.leave() }
+        // request.execute { success, data, error in
+        //     defer { dispatchGroup.leave() }
 
-            if let error = error {
-                print("Error sending email:\n\(error)".ansi(.red))
-            } else if let data = data, success {
+        //     if let error = error {
+        //         print("Error sending email:\n\(error)".ansi(.red))
+        //     } else if let data = data, success {
+        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
+        //     }
+        // }
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
             }
+            dispatchGroup.leave()
         }
 
         dispatchGroup.wait()
