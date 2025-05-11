@@ -30,6 +30,7 @@ enum Route: String, RawRepresentable {
     case service
     case resolution
     case affiliate
+    case custom
 
     func alias() -> String {
         switch self {
@@ -49,6 +50,8 @@ enum Route: String, RawRepresentable {
                 return "relaties"
             case .affiliate:
                 return "relaties"
+            case .custom:
+                return "relaties"
         }
     }
 }
@@ -65,6 +68,8 @@ enum Endpoint: String, RawRepresentable {
     case review = "review"
     case check = "check"
     case food = "food"
+    case templateFetch = "template/fetch"
+    case messageSend = "message/send"
 }
 
 struct RequestURL {
@@ -242,7 +247,7 @@ struct Mailer: ParsableCommand {
         commandName: "mailer",
         abstract: "Mailer api interface",
         version: "1.0.0",
-        subcommands: [Invoice.self, Appointment.self, Quote.self, Service.self, Resolution.self, Lead.self, Affiliate.self, Example.self]  
+        subcommands: [Invoice.self, Appointment.self, Quote.self, Service.self, Resolution.self, Lead.self, Affiliate.self, TemplateAPI.self, CustomMessage.self, Example.self]  
         // defaultSubcommand: Mail.self
     )
 }
@@ -1493,6 +1498,157 @@ struct Affiliate: ParsableCommand {
             dispatchGroup.leave()
         }
 
+        dispatchGroup.wait()
+    }
+}
+
+struct TemplateAPI: ParsableCommand {
+    @Argument(help: "API server template category")
+    var category: String
+
+    @Argument(help: "API server template file, in category")
+    var file: String
+
+    func run() throws {
+        var attachments: [[String: String]] = []
+
+        let mailPayload: [String: Any] = [
+            "category": category,
+            "file": file
+        ]
+
+        try fetch(payload: mailPayload)
+    }
+
+    func fetch(payload: [String: Any]) throws {
+        let apiKey = environment(Environment.apikey.rawValue)
+        
+        var endpoint: URL
+
+        endpoint = RequestURL(
+            route: .custom,
+            endpoint: .templateFetch
+        ).url()
+
+        print("Hitting API endpoint with URL: ", endpoint)
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        
+        let request = NetworkRequest(
+            url: endpoint,
+            method: .post,
+            auth: .apikey(value: apiKey),
+            headers: ["Content-Type": "application/json"],
+            body: jsonData,
+            log: true
+        )
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
+                let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+                print("Fetched template:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error fetching template:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error fetching template:\n\(apiErr.message)".ansi(.red))
+                    }
+            }
+            dispatchGroup.leave()
+        }
+
+        dispatchGroup.wait()
+    }
+}
+
+struct CustomMessage: ParsableCommand {
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
+    var client: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
+    var dog: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
+    var email: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "subject of message")
+    var subject: String
+
+    @Option(name: .shortAndLong, parsing: .unconditional, help: "html body")
+    var body: String
+
+    func run() throws {
+        var attachments: [[String: String]] = []
+
+        let mailPayload: [String: Any] = [
+            "from": [
+                "name": environment(Environment.from.rawValue),
+                "alias": Route.quote.alias(),
+                "domain": environment(Environment.domain.rawValue)
+            ],
+            "to": [email],
+            "bcc": environment(Environment.automationsEmail.rawValue),
+            "subject": subject,
+            "body": body,
+            "replyTo": [environment(Environment.replyTo.rawValue)],
+            "attachments": attachments
+        ]
+
+        try sendCustomMessageEmail(payload: mailPayload)
+    }
+
+    func sendCustomMessageEmail(payload: [String: Any]) throws {
+        let apiKey = environment(Environment.apikey.rawValue)
+        
+        var endpoint: URL
+
+        endpoint = RequestURL(
+            route: .custom,
+            endpoint: .messageSend
+        ).url()
+
+        print("Hitting API endpoint with URL: ", endpoint)
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+        
+        let request = NetworkRequest(
+            url: endpoint,
+            method: .post,
+            auth: .apikey(value: apiKey),
+            headers: ["Content-Type": "application/json"],
+            body: jsonData,
+            log: true
+        )
+
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+
+        request.executeAPI { result in
+            switch result {
+            case .success(let data):
+                let responseString = String(data: data, encoding: .utf8) ?? "No response data"
+                print("Email sent successfully:\n\(responseString)".ansi(.green))
+
+            case .failure(let apiErr):
+                // Print the server‐returned error JSON if you like,
+                // otherwise just show apiErr.message
+                if let errData = try? JSONEncoder().encode(apiErr),
+                    let errJSON = String(data: errData, encoding: .utf8) {
+                        print("Error sending email:\n\(errJSON)".ansi(.red))
+                    } else {
+                        print("Error sending email:\n\(apiErr.message)".ansi(.red))
+                    }
+            }
+            dispatchGroup.leave()
+        }
         dispatchGroup.wait()
     }
 }
