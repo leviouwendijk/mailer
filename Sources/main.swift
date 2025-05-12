@@ -557,7 +557,8 @@ struct Invoice: ParsableCommand {
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
-            "to": [sendEmail],
+            // "to": [sendEmail],
+            "to": sendEmail,
             "bcc": environment(Environment.automationsEmail.rawValue),
             // "subject": "Betalingsherinnering",
             "template": [
@@ -667,8 +668,8 @@ struct Appointment: ParsableCommand {
     @Option(name: .shortAndLong, help: "Dog's name")
     var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "Client email address")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     @Argument(help: "JSON array of appointments")
     var appointmentsJSON: String
@@ -716,7 +717,8 @@ struct Appointment: ParsableCommand {
                 "alias": Route.appointment.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
                 // "category": "appointment",
@@ -856,8 +858,8 @@ struct Lead: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
     var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     // defaults to "onboarding"
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than issue endpoint.")
@@ -911,7 +913,8 @@ struct Lead: ParsableCommand {
                 "alias": Route.quote.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
                 "variables": [
@@ -1006,8 +1009,8 @@ struct Quote: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
     var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than issue endpoint.")
     var follow: Bool = false
@@ -1035,7 +1038,8 @@ struct Quote: ParsableCommand {
                 "alias": Route.quote.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
                 "variables": [
@@ -1124,8 +1128,8 @@ struct Service: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
     var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     // defaults to "onboarding"
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
@@ -1176,7 +1180,8 @@ struct Service: ParsableCommand {
                 "alias": Route.quote.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
                 "variables": [
@@ -1266,8 +1271,8 @@ struct Resolution: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
     var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     // defaults to "onboarding"
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
@@ -1296,7 +1301,8 @@ struct Resolution: ParsableCommand {
                 "alias": Route.quote.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
                 "variables": [
@@ -1385,8 +1391,8 @@ struct Affiliate: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
     var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     // defaults to "onboarding"
     // @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
@@ -1418,7 +1424,8 @@ struct Affiliate: ParsableCommand {
                 "alias": Route.quote.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "template": [
                 "variables": [
@@ -1570,14 +1577,14 @@ struct TemplateAPI: ParsableCommand {
 }
 
 struct CustomMessage: ParsableCommand {
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
-    var client: String
+    // @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
+    // var client: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
-    var dog: String
+    // @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
+    // var dog: String
 
-    @Option(name: .shortAndLong, parsing: .unconditional, help: "email address to send to")
-    var email: String
+    @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
+    var email: [String] = []
 
     @Option(name: .shortAndLong, parsing: .unconditional, help: "subject of message")
     var subject: String
@@ -1594,7 +1601,8 @@ struct CustomMessage: ParsableCommand {
                 "alias": Route.quote.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
-            "to": [email],
+            // "to": [email],
+            "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "subject": subject,
             "body": body,
