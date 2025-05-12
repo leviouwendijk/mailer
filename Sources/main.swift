@@ -910,7 +910,7 @@ struct Lead: ParsableCommand {
         let mailPayload: [String: Any] = [
             "from": [
                 "name": environment(Environment.from.rawValue),
-                "alias": Route.quote.alias(),
+                "alias": Route.lead.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
@@ -1177,7 +1177,7 @@ struct Service: ParsableCommand {
         let mailPayload: [String: Any] = [
             "from": [
                 "name": environment(Environment.from.rawValue),
-                "alias": Route.quote.alias(),
+                "alias": Route.service.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
@@ -1298,7 +1298,7 @@ struct Resolution: ParsableCommand {
         let mailPayload: [String: Any] = [
             "from": [
                 "name": environment(Environment.from.rawValue),
-                "alias": Route.quote.alias(),
+                "alias": Route.resolution.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
@@ -1421,7 +1421,7 @@ struct Affiliate: ParsableCommand {
         let mailPayload: [String: Any] = [
             "from": [
                 "name": environment(Environment.from.rawValue),
-                "alias": Route.quote.alias(),
+                "alias": Route.affiliate.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
@@ -1598,7 +1598,7 @@ struct CustomMessage: ParsableCommand {
         let mailPayload: [String: Any] = [
             "from": [
                 "name": environment(Environment.from.rawValue),
-                "alias": Route.quote.alias(),
+                "alias": Route.custom.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
