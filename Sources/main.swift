@@ -1592,13 +1592,30 @@ struct CustomMessage: ParsableCommand {
     @Option(name: .shortAndLong, parsing: .unconditional, help: "html body")
     var body: String
 
+    @Flag(name: .shortAndLong, help: "Include quote in custom message")
+    var quote: Bool = false
+
     func run() throws {
         var attachments: [[String: String]] = []
+
+        let attachmentPath = environment(Environment.quotePath.rawValue)
+        let attachmentURL = URL(fileURLWithPath: attachmentPath)
+        let attachmentBase64 = attachmentURL.base64()
+
+        if quote {
+        // for quote in quotes {
+            attachments.append([
+                "type": "pdf",
+                "value": attachmentBase64 ?? "",
+                "name": "offerte.pdf"
+            ])
+        // }
+        }
 
         let mailPayload: [String: Any] = [
             "from": [
                 "name": environment(Environment.from.rawValue),
-                "alias": Route.custom.alias(),
+                "alias": quote ? Route.quote.alias() : Route.custom.alias(),
                 "domain": environment(Environment.domain.rawValue)
             ],
             // "to": [email],
