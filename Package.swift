@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "mailer",
+    platforms: [
+        .macOS(.v13)
+    ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
         .package(url: "https://github.com/leviouwendijk/plate.git", branch: "master"),
