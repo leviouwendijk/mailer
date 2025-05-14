@@ -7,7 +7,7 @@ let package = Package(
     name: "mailer",
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
-        .package(url: "https://github.com/leviouwendijk/plate.git", from: "1.0.2"),
+        .package(url: "https://github.com/leviouwendijk/plate.git", branch: "master"),
     ],
     targets: [
         .executableTarget(
