@@ -265,186 +265,6 @@ func reqURL(apiURL: String? = nil, endpoint: String? = nil) throws -> URL {
     return url
 }
 
-// struct Mail: ParsableCommand {
-//     static let configuration = CommandConfiguration(
-//         commandName: "mail",
-//         abstract: "Base function to send email with custom from and to inputs"
-//     )
-
-//     @Option(name: .shortAndLong, help: "API base URL (defaults to env var)")
-//     var apiURL: String = environment(Environment.apiURL.rawValue)
-
-//     @Option(name: .shortAndLong, help: "API access key (defaults to env var)")
-//     var apikey: String = environment(Environment.apikey.rawValue)
-
-//     @Option(name: .shortAndLong, help: "API endpoint (defaults to env var)")
-//     var endpoint: String = environment(Environment.endpoint.rawValue)
-
-//     @Option(name: .shortAndLong, help: "From name")
-//     var from: String = environment(Environment.from.rawValue)
-
-//     @Option(name: .shortAndLong, help: "From alias: (alias -> alias@domain.nl)")
-//     var alias: String = Route.send.alias()
-
-//     @Option(name: .shortAndLong, help: "From domain (domain.nl)")
-//     var domain: String = environment(Environment.domain.rawValue)
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Recipient email address(es)")
-//     var to: String
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "CC email addresses (comma-separated)")
-//     var cc: String = ""
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "BCC email addresses (comma-separated)")
-//     var bcc: String = ""
-
-//     @Option(name: .shortAndLong, help: "Email subject")
-//     var subject: String?
-
-//     @Option(name: .shortAndLong, help: "HTML template category (server-side)")
-//     var category: String 
-
-//     @Option(name: .shortAndLong, help: "HTML template file in category (server-side)")
-//     var file: String 
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated key=value pairs for template replacement")
-//     var variables: String
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Headers to include")
-//     var headers: String?
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Body for request")
-//     var body: String?
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
-//     var attachments: String?
-
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Reply to addresses")
-//     var replyTo: String = environment(Environment.replyTo.rawValue)
-
-//     @Option(name: .shortAndLong, help: "Log debugging")
-//     var log: Bool = false
-
-//     func run() throws {
-//         let from = From(name: from, alias: alias, domain: domain)
-
-//         let toEmails = to.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-//         let ccEmails = cc.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-//         let bccEmails = bcc.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-
-//         let to = To(to: toEmails, cc: ccEmails, bcc: bccEmails)
-
-//         let variablesDict = parseKeyValues(variables)
-//         let template = Template(category: category, file: file, variables: variablesDict)
-
-//         let attachmentsSet = parseAttachments(attachments ?? "")
-
-//         let emailbody = EmailBody(
-//             from: from,
-//             to: to,
-//             subject: subject ?? "",
-//             template: template,
-//             headers: parseKeyValues(headers ??  ""),
-//             replyTo: parseList(replyTo),
-//             attachments: attachmentsSet
-//         )
-
-//         // let bodyData = body.data(using: .utf8)
-//         let bodyData = constructBody(emailbody)
-
-//         let endpoint = RequestURL(
-//             route: .send, 
-//             endpoint: .new)
-//         .url()
-
-//         let req = NetworkRequest(
-//             url: endpoint,
-//             method: .post,
-//             auth: .apikey(value: apikey),
-//             headers: parseKeyValues(headers ?? ""),
-//             body: bodyData,
-//             log: log
-//         )
-
-//         let dispatchGroup = DispatchGroup()
-//         dispatchGroup.enter()
-
-//         req.execute { success, data, error in
-//             defer { dispatchGroup.leave() }
-
-//             if let error = error {
-//                 print("API ERROR:\n\(error)".ansi(.red))
-//             } else if let data = data, success {
-//                 let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-//                 print("API Response:\n\(responseString)".ansi(.green))
-//             } else {
-//                 print("Unknown failure.")
-//             }
-//         }
-
-//         dispatchGroup.wait() 
-//     }
-
-//     func parseAttachments(_ string: String) -> [Attachment] {
-//         let paths = string.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-//         let attachments = paths.map { Attachment(path: $0) }
-//         return attachments
-//     }
-
-//     func parseList(_ string: String) -> [String] {
-//         return string
-//             .split(separator: ",")
-//             .map { $0.trimmingCharacters(in: .whitespaces) }
-//             .filter { !$0.isEmpty }
-//     }
-    
-//     func parseKeyValues(_ string: String) -> [String: String] {
-//         guard string != "" else { return [:] }
-
-//         var dictionary: [String: String] = [:]
-
-//         string.split(separator: ",").forEach { string in
-//             let components = string.split(separator: "=", maxSplits: 1).map { String($0) }
-//             if components.count == 2 {
-//                 dictionary[components[0].trimmingCharacters(in: .whitespaces)] =
-//                     components[1].trimmingCharacters(in: .whitespaces)
-//             }
-//         }
-
-//         return dictionary
-//     }
-
-//     func constructBody(_ emailbody: EmailBody) -> Data? {
-//         var body: [String: Any] = [
-//             "from": emailbody.from.dictionary(),
-//             "to": emailbody.to.to,
-//             "cc": emailbody.to.cc.isEmpty ? nil : emailbody.to.cc,  
-//             "bcc": emailbody.to.bcc.isEmpty ? nil : emailbody.to.bcc,
-//             "template": emailbody.template.dictionary(),
-//             "replyTo": emailbody.replyTo.isEmpty ? nil : emailbody.replyTo,
-//             "headers": emailbody.headers.isEmpty ? nil : emailbody.headers,
-//             "attachments": emailbody.attachments.isEmpty ? nil : emailbody.attachments.map { $0.dictionary() }
-//         ]
-
-//         if !emailbody.subject.isEmpty {
-//             body["subject"] = emailbody.subject
-//         }
-
-//         body = body.compactMapValues { $0 }
-
-//         do {
-//             let jsonData = try JSONSerialization.data(withJSONObject: body, options: .prettyPrinted)
-//             if let jsonString = String(data: jsonData, encoding: .utf8) {
-//                 print("Generated JSON Body:\n\(jsonString)")
-//             }
-//             return jsonData
-//         } catch {
-//             print("Error serializing JSON: \(error)")
-//             return nil
-//         }
-//     }
-// }
-
 struct Invoice: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "invoice",
@@ -853,7 +673,6 @@ struct Appointment: ParsableCommand {
             }
             dispatchGroup.leave()
         }
-
         dispatchGroup.wait()
     }
 }
@@ -975,17 +794,6 @@ struct Lead: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        // request.execute { success, data, error in
-        //     defer { dispatchGroup.leave() }
-
-        //     if let error = error {
-        //         print("Error sending email:\n\(error)".ansi(.red))
-        //     } else if let data = data, success {
-        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
-        //     }
-        // }
-
         request.executeAPI { result in
             switch result {
             case .success(let data):
@@ -993,8 +801,6 @@ struct Lead: ParsableCommand {
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
 
             case .failure(let apiErr):
-                // Print the server‐returned error JSON if you like,
-                // otherwise just show apiErr.message
                 if let errData = try? JSONEncoder().encode(apiErr),
                     let errJSON = String(data: errData, encoding: .utf8) {
                         print("Error sending email:\n\(errJSON)".ansi(.red))
@@ -1094,17 +900,6 @@ struct Quote: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        // request.execute { success, data, error in
-        //     defer { dispatchGroup.leave() }
-
-        //     if let error = error {
-        //         print("Error sending email:\n\(error)".ansi(.red))
-        //     } else if let data = data, success {
-        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
-        //     }
-        // }
-
         request.executeAPI { result in
             switch result {
             case .success(let data):
@@ -1112,8 +907,6 @@ struct Quote: ParsableCommand {
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
 
             case .failure(let apiErr):
-                // Print the server‐returned error JSON if you like,
-                // otherwise just show apiErr.message
                 if let errData = try? JSONEncoder().encode(apiErr),
                     let errJSON = String(data: errData, encoding: .utf8) {
                         print("Error sending email:\n\(errJSON)".ansi(.red))
@@ -1237,17 +1030,6 @@ struct Service: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        // request.execute { success, data, error in
-        //     defer { dispatchGroup.leave() }
-
-        //     if let error = error {
-        //         print("Error sending email:\n\(error)".ansi(.red))
-        //     } else if let data = data, success {
-        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
-        //     }
-        // }
-
         request.executeAPI { result in
             switch result {
             case .success(let data):
@@ -1255,8 +1037,6 @@ struct Service: ParsableCommand {
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
 
             case .failure(let apiErr):
-                // Print the server‐returned error JSON if you like,
-                // otherwise just show apiErr.message
                 if let errData = try? JSONEncoder().encode(apiErr),
                     let errJSON = String(data: errData, encoding: .utf8) {
                         print("Error sending email:\n\(errJSON)".ansi(.red))
@@ -1357,17 +1137,6 @@ struct Resolution: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        // request.execute { success, data, error in
-        //     defer { dispatchGroup.leave() }
-
-        //     if let error = error {
-        //         print("Error sending email:\n\(error)".ansi(.red))
-        //     } else if let data = data, success {
-        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
-        //     }
-        // }
-
         request.executeAPI { result in
             switch result {
             case .success(let data):
@@ -1375,8 +1144,6 @@ struct Resolution: ParsableCommand {
                 print("Email sent successfully:\n\(responseString)".ansi(.green))
 
             case .failure(let apiErr):
-                // Print the server‐returned error JSON if you like,
-                // otherwise just show apiErr.message
                 if let errData = try? JSONEncoder().encode(apiErr),
                     let errJSON = String(data: errData, encoding: .utf8) {
                         print("Error sending email:\n\(errJSON)".ansi(.red))
@@ -1386,7 +1153,6 @@ struct Resolution: ParsableCommand {
             }
             dispatchGroup.leave()
         }
-
         dispatchGroup.wait()
     }
 }
@@ -1482,17 +1248,6 @@ struct Affiliate: ParsableCommand {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
 
-        // request.execute { success, data, error in
-        //     defer { dispatchGroup.leave() }
-
-        //     if let error = error {
-        //         print("Error sending email:\n\(error)".ansi(.red))
-        //     } else if let data = data, success {
-        //         let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-        //         print("Email sent successfully:\n\(responseString)".ansi(.green))
-        //     }
-        // }
-
         request.executeAPI { result in
             switch result {
             case .success(let data):
@@ -1511,7 +1266,6 @@ struct Affiliate: ParsableCommand {
             }
             dispatchGroup.leave()
         }
-
         dispatchGroup.wait()
     }
 }
@@ -1567,8 +1321,6 @@ struct TemplateAPI: ParsableCommand {
                 print("Fetched template:\n\(responseString)".ansi(.green))
 
             case .failure(let apiErr):
-                // Print the server‐returned error JSON if you like,
-                // otherwise just show apiErr.message
                 if let errData = try? JSONEncoder().encode(apiErr),
                     let errJSON = String(data: errData, encoding: .utf8) {
                         print("Error fetching template:\n\(errJSON)".ansi(.red))
@@ -1578,18 +1330,11 @@ struct TemplateAPI: ParsableCommand {
             }
             dispatchGroup.leave()
         }
-
         dispatchGroup.wait()
     }
 }
 
 struct CustomMessage: ParsableCommand {
-    // @Option(name: .shortAndLong, parsing: .unconditional, help: "client name")
-    // var client: String
-
-    // @Option(name: .shortAndLong, parsing: .unconditional, help: "dog name")
-    // var dog: String
-
     @Option(name: .shortAndLong, parsing: .upToNextOption, help: "email address to send to")
     var email: [String] = []
 
@@ -1610,13 +1355,11 @@ struct CustomMessage: ParsableCommand {
         let attachmentBase64 = attachmentURL.base64()
 
         if quote {
-        // for quote in quotes {
             attachments.append([
                 "type": "pdf",
                 "value": attachmentBase64 ?? "",
                 "name": "offerte.pdf"
             ])
-        // }
         }
 
         let mailPayload: [String: Any] = [
@@ -1684,24 +1427,6 @@ struct CustomMessage: ParsableCommand {
         dispatchGroup.wait()
     }
 }
-
-// struct Follow: ParsableCommand {
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
-//     var invoiceId: String
-
-//     func run() throws {
-
-//     }
-// }
-
-// struct Onboarding: ParsableCommand {
-//     @Option(name: .shortAndLong, parsing: .unconditional, help: "Comma-separated file paths for attachments")
-//     var invoiceId: String
-
-//     func run() throws {
-
-//     }
-// }
 
 struct Example: ParsableCommand {
     func run() throws {
