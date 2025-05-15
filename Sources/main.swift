@@ -460,9 +460,12 @@ struct Invoice: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Changes endpoint from /invoice/issue to /invoice/expired")
     var expired: Bool = false
 
+    @Flag(name: .shortAndLong, help: "Return to Responder instead of Ghostty in numbers-parser")
+    var responder: Bool = false
+
     func run() throws {
         do {
-            try executeNumbersParser(invoiceId: invoiceId, close: close)
+            try executeNumbersParser(invoiceId: invoiceId, close: close, returnToResponder: responder)
             let invoiceData = try readParsedInvoiceData(invoiceId: invoiceId)
             let mailPayload = constructMailPayload(from: invoiceData)
             try sendInvoiceEmail(payload: mailPayload, expired: expired)
@@ -471,12 +474,16 @@ struct Invoice: ParsableCommand {
         }
     }
 
-    func executeNumbersParser(invoiceId: String, close: Bool) throws {
+    func executeNumbersParser(invoiceId: String, close: Bool, returnToResponder: Bool) throws {
         do {
             let home = Home.string()
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/zsh") // Use Zsh directly
-            process.arguments = ["-c", "source ~/.zprofile && \(home)/sbm-bin/numbers-parser --close \(close) --adjust-before-exporting --value \(invoiceId)"]
+
+            let base = "source ~/.zprofile && \(home)/sbm-bin/numbers-parser --close \(close) --adjust-before-exporting --value \(invoiceId)"
+            let cmd = returnToResponder ? base + " --responder" : base
+
+            process.arguments = ["-c", cmd]
             
             let outputPipe = Pipe()
             let errorPipe = Pipe()
