@@ -290,7 +290,7 @@ struct Invoice: ParsableCommand {
         do {
             try executeNumbersParser(invoiceId: invoiceId, close: close, returnToResponder: responder)
             let invoiceData = try readParsedInvoiceData(invoiceId: invoiceId)
-            let mailPayload = constructMailPayload(from: invoiceData)
+            let mailPayload = try constructMailPayload(from: invoiceData)
             try sendInvoiceEmail(payload: mailPayload, expired: expired)
         } catch {
             print("Error running commands: \(error)")
@@ -353,7 +353,7 @@ struct Invoice: ParsableCommand {
         return invoicesDict
     }
 
-    func constructMailPayload(from invoiceData: [String: Any]) -> [String: Any] {
+    func constructMailPayload(from invoiceData: [String: Any]) throws -> [String: Any] {
         let name = invoiceData["client_name"] as? String ?? "Unknown"
         let email = invoiceData["email"] as? String ?? "ERROR EXTRACTING EMAIL FROM numbers-parser/client_db_reparse.json"
         let invoiceNumber = invoiceData["invoice_id"] as? String ?? "000000"
@@ -372,7 +372,7 @@ struct Invoice: ParsableCommand {
 
         let attachmentPath = environment(Environment.invoicePDF.rawValue)
         let attachmentURL = URL(fileURLWithPath: attachmentPath)
-        let attachmentBase64 = attachmentURL.base64()
+        let attachmentBase64 = try attachmentURL.base64()
         
         let sendEmail = production ? email : environment(Environment.testEmail.rawValue)
 
@@ -836,7 +836,7 @@ struct Quote: ParsableCommand {
 
         let attachmentPath = environment(Environment.quotePath.rawValue)
         let attachmentURL = URL(fileURLWithPath: attachmentPath)
-        let attachmentBase64 = attachmentURL.base64()
+        let attachmentBase64 = try attachmentURL.base64()
 
         if !follow {
         // for quote in quotes {
@@ -1359,12 +1359,12 @@ struct CustomMessage: ParsableCommand {
 
         let attachmentPath = environment(Environment.quotePath.rawValue)
         let attachmentURL = URL(fileURLWithPath: attachmentPath)
-        let attachmentBase64 = attachmentURL.base64()
+        let attachmentBase64 = try attachmentURL.base64()
 
         if quote {
             attachments.append([
                 "type": "pdf",
-                "value": attachmentBase64 ?? "",
+                "value": attachmentBase64,
                 "name": "offerte.pdf"
             ])
         }
