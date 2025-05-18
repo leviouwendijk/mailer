@@ -31,6 +31,7 @@ enum Route: String, RawRepresentable {
     case resolution
     case affiliate
     case custom
+    case template
 
     func alias() -> String {
         switch self {
@@ -52,6 +53,8 @@ enum Route: String, RawRepresentable {
                 return "relaties"
             case .custom:
                 return "relaties"
+            default:
+                return "relaties"
         }
     }
 }
@@ -68,7 +71,7 @@ enum Endpoint: String, RawRepresentable {
     case review = "review"
     case check = "check"
     case food = "food"
-    case templateFetch = "template/fetch"
+    case fetch = "fetch"
     case messageSend = "message/send"
 }
 
@@ -238,8 +241,8 @@ struct AppointmentDetails: Codable {
 }
 
 struct AvailabilityEntry: Codable {
-  let start: String
-  let end:   String
+    let start: String
+    let end:   String
 }
 
 struct Mailer: ParsableCommand {
@@ -1281,8 +1284,12 @@ struct TemplateAPI: ParsableCommand {
         var attachments: [[String: String]] = []
 
         let mailPayload: [String: Any] = [
-            "category": category,
-            "file": file
+            "template": [
+                "variables": [
+                    "category": category,
+                    "file": file
+                ]
+            ]
         ]
 
         try fetch(payload: mailPayload)
@@ -1294,8 +1301,8 @@ struct TemplateAPI: ParsableCommand {
         var endpoint: URL
 
         endpoint = RequestURL(
-            route: .custom,
-            endpoint: .templateFetch
+            route: .template,
+            endpoint: .fetch
         ).url()
 
         print("Hitting API endpoint with URL: ", endpoint)
@@ -1372,7 +1379,11 @@ struct CustomMessage: ParsableCommand {
             "to": email,
             "bcc": environment(Environment.automationsEmail.rawValue),
             "subject": subject,
-            "body": body,
+            "template": [
+                "variables": [
+                    "body": body,
+                ]
+            ],
             "replyTo": [environment(Environment.replyTo.rawValue)],
             "attachments": attachments
         ]
