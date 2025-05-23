@@ -73,6 +73,7 @@ enum Endpoint: String, RawRepresentable {
     case food = "food"
     case fetch = "fetch"
     case messageSend = "message/send"
+    case demo = "demo"
 }
 
 struct RequestURL {
@@ -938,6 +939,9 @@ struct Service: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
     var follow: Bool = false
 
+    @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
+    var demo: Bool = false
+
     @Option(
       name: .long,
       parsing: .unconditional,
@@ -946,20 +950,19 @@ struct Service: ParsableCommand {
     var availabilityJSON: String
 
     func run() throws {
-        // decode your JSON into a [String:TimeEntry]
-        guard let data = availabilityJSON.data(using: .utf8),
-              let avail = try? JSONDecoder().decode(
-                 [String: AvailabilityEntry].self,
-                 from: data
-              )
-        else {
-          throw ValidationError("Invalid JSON for --availabilityJSON")
-        }
+        // guard let data = availabilityJSON.data(using: .utf8),
+        //       let avail = try? JSONDecoder().decode(
+        //          [String: AvailabilityEntry].self,
+        //          from: data
+        //       )
+        // else {
+        //   throw ValidationError("Invalid JSON for --availabilityJSON")
+        // }
 
-        let timeRangeDict = avail.reduce(into: [String:[String:String]]()) { out, pair in
-            let (day, entry) = pair
-                out[day] = ["start": entry.start, "end": entry.end]
-        }
+        // let timeRangeDict = avail.reduce(into: [String:[String:String]]()) { out, pair in
+        //     let (day, entry) = pair
+        //         out[day] = ["start": entry.start, "end": entry.end]
+        // }
 
         var attachments: [[String: String]] = []
 
@@ -990,7 +993,7 @@ struct Service: ParsableCommand {
                 "variables": [
                     "name": client,
                     "dog": dog,
-                    "time_range": timeRangeDict
+                    // "time_range": timeRangeDict
                 ]
             ],
             "replyTo": [environment(Environment.replyTo.rawValue)],
@@ -1005,7 +1008,12 @@ struct Service: ParsableCommand {
         
         var endpoint: URL
 
-        if follow {
+        if demo {
+            endpoint = RequestURL(
+                route: .service,
+                endpoint: .demo
+            ).url()
+        } else if follow {
             endpoint = RequestURL(
                 route: .service,
                 endpoint: .follow
