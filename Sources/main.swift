@@ -942,12 +942,12 @@ struct Service: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Follow-up endpoint rather than onboarding endpoint.")
     var demo: Bool = false
 
-    @Option(
-      name: .long,
-      parsing: .unconditional,
-      help: "JSON object of availability, e.g. '{\"mon\":{\"start\":\"18:00\",\"end\":\"21:00\"},…}'"
-    )
-    var availabilityJSON: String
+    // @Option(
+    //   name: .long,
+    //   parsing: .unconditional,
+    //   help: "JSON object of availability, e.g. '{\"mon\":{\"start\":\"18:00\",\"end\":\"21:00\"},…}'"
+    // )
+    // var availabilityJSON: String
 
     func run() throws {
         // guard let data = availabilityJSON.data(using: .utf8),
