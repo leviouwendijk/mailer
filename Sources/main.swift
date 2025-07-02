@@ -582,7 +582,7 @@ struct Appointment: ParsableCommand {
         DTSTART:\(startTime)
         DTEND:\(endTime)
         SUMMARY:Hondenmeesters, afspraak voor \(dog)
-        DESCRIPTION:Beste \(client),\\n\\nUw afspraak voor \(dog) is bevestigd.\\n\\nHoud alsjeblief rekening met mogelijke uitloop.\\n\\nHartelijke groet,\\nHet Hondenmeesters Team
+        DESCRIPTION:Beste \(client),\\n\\nJe afspraak voor \(dog) is bevestigd.\\n\\nHoud alsjeblieft rekening met mogelijke uitloop.\\n\\nHartelijke groet,\\nHet Hondenmeesters Team
         LOCATION:\(appointment.street) \(appointment.number)\\n\(appointment.area)\\n\(appointment.location)
         END:VEVENT
         END:VCALENDAR
